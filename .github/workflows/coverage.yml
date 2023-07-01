@@ -1,6 +1,9 @@
 name: Coverage
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
 
 concurrency:
   group: "pages"
@@ -29,12 +32,15 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - name: Initialization
-        run: cargo install grcov
+        run: |
+          cargo install grcov
+          sudo apt-get update
+          sudo apt-get install -y xsltproc lcov
       - name: Tests
         run: cargo test
       - name: Generate coverage
         run: |
-          grcov . -s . -b ./target/debug/ --branch --llvm --ignore-not-existing --excl-line "${EXCL_LINE}" --excl-start "${EXCL_START}" --excl-stop "${EXCL_STOP}" --excl-br-line "${EXCL_BR_LINE}" --excl-br-start "${EXCL_BR_START}" --excl-br-stop "${EXCL_BR_STOP}" --ignore "*cargo*" -t cobertura -o ./coverage_raw.xml && xsltproc --novalid --output ./coverage.xml ./.gitlab-cov.xsl ./coverage_raw.xml || true
+          grcov . -s . -b ./target/debug/ --branch --llvm --ignore-not-existing --excl-line "${EXCL_LINE}" --excl-start "${EXCL_START}" --excl-stop "${EXCL_STOP}" --excl-br-line "${EXCL_BR_LINE}" --excl-br-start "${EXCL_BR_START}" --excl-br-stop "${EXCL_BR_STOP}" --ignore "*cargo*" -t cobertura -o ./coverage_raw.xml && xsltproc --novalid --output ./coverage.xml ./.coverage.xsl ./coverage_raw.xml || true
           grcov . -s . -b ./target/debug/ --branch --llvm --ignore-not-existing --excl-line "${EXCL_LINE}" --excl-start "${EXCL_START}" --excl-stop "${EXCL_STOP}" --excl-br-line "${EXCL_BR_LINE}" --excl-br-start "${EXCL_BR_START}" --excl-br-stop "${EXCL_BR_STOP}" --ignore "*cargo*" -t lcov -o ./coverage.lcov && genhtml --branch --no-function-coverage --precision 2 ./coverage.lcov -o ./coverage || true
       - name: Upload page artifact
         uses: actions/upload-pages-artifact@v1
