@@ -1,0 +1,60 @@
+name: Coverage
+
+on: [push, pull_request, workflow_dispatch]
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
+
+jobs:
+
+  tests:
+    name: tests
+
+    runs-on: ubuntu-latest
+
+    env:
+      CARGO_INCREMENTAL: 0
+      EXCL_ENUM_STRUCT: "^([[:space:]]*)(pub |pub(([[:alpha:]]|[[:space:]]|[:])+) )?(enum|struct) "
+      EXCL_ENUM_FN_STRUCT: "^([[:space:]]*)(pub |pub(([[:alpha:]]|[[:space:]]|[:])+) )?(enum|fn|struct) "
+      EXCL_LINE: "//!|#\\[|use|unreachable!|^\\}|$EXCL_ENUM_STRUCT"
+      EXCL_START: "$EXCL_ENUM_STRUCT"
+      EXCL_STOP: "^\\}"
+      EXCL_BR_LINE: "#\\[|assert(_eq)?!|(error|warn|info|debug|trace)!|^[[:space:]]*\\}(,)?$|$EXCL_ENUM_FN_STRUCT"
+      EXCL_BR_START: "#\\[no_coverage\\]|^mod tests \\{|$EXCL_ENUM_STRUCT"
+      EXCL_BR_STOP: "^\\}"
+      RUSTDOCFLAGS: "$RUSTFLAGS"
+      RUSTFLAGS: "-Zprofile -Ccodegen-units=1 -Copt-level=0 -Clink-dead-code -Coverflow-checks=off -Zpanic_abort_tests -Cpanic=abort"
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Initialization
+        run: cargo install grcov
+      - name: Tests
+        run: cargo test
+      - name: Generate coverage
+        run: |
+          grcov . -s . -b ./target/debug/ --branch --llvm --ignore-not-existing --excl-line "${EXCL_LINE}" --excl-start "${EXCL_START}" --excl-stop "${EXCL_STOP}" --excl-br-line "${EXCL_BR_LINE}" --excl-br-start "${EXCL_BR_START}" --excl-br-stop "${EXCL_BR_STOP}" --ignore "*cargo*" -t cobertura -o ./coverage_raw.xml && xsltproc --novalid --output ./coverage.xml ./.gitlab-cov.xsl ./coverage_raw.xml || true
+          grcov . -s . -b ./target/debug/ --branch --llvm --ignore-not-existing --excl-line "${EXCL_LINE}" --excl-start "${EXCL_START}" --excl-stop "${EXCL_STOP}" --excl-br-line "${EXCL_BR_LINE}" --excl-br-start "${EXCL_BR_START}" --excl-br-stop "${EXCL_BR_STOP}" --ignore "*cargo*" -t lcov -o ./coverage.lcov && genhtml --branch --no-function-coverage --precision 2 ./coverage.lcov -o ./coverage || true
+      - name: Upload page artifact
+        uses: actions/upload-pages-artifact@v1
+        with:
+          path: "coverage/"
+
+  deploy:
+    name: deploy
+    needs: tests
+
+    permissions:
+      pages: write
+      id-token: write
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.output.page_url }}
+    
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy documentation to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v1
