@@ -13,17 +13,23 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Cache restore
-        id: cache-restore
+      - name: Cargo cache restore
+        id: cargo-cache-restore
+        uses: actions/cache/restore@v3
+        with:
+          path: |
+            "~/.cargo/git"
+            "~/.cargo/registry"
+          key: ${{ runner.os }}
+      - name: Initialization
+        run: cargo install cargo-deny
+      - name: Target cache restore
+        id: target-cache-restore
         uses: actions/cache/restore@v3
         with:
           path: |
             "target/"
-            "~/.cargo/git"
-            "~/.cargo/registry"
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-      - name: Initialization
-        run: cargo install cargo-deny
+          key: ${{ runner.os }}-target-${{ hashFiles('**/Cargo.lock') }}
       - name: Check
         run: |
           cargo deny check
@@ -34,9 +40,17 @@ jobs:
         run: cargo build
       - name: Tests
         run: cargo test
-      - name: Save cache
-        id: cache-save
+      - name: Save cargo cache
+        id: cargo-cache-save
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            "~/.cargo/git"
+            "~/.cargo/registry"
+          key: ${{ steps.cargo-cache-restore.outputs.cache-primary-key }}
+      - name: Save target cache
+        id: target-cache-save
         uses: actions/cache/save@v3
         with:
           path: "target/"
-          key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+          key: ${{ steps.cargo-cache-restore.outputs.cache-primary-key }}
