@@ -18,8 +18,6 @@
     clippy::exhaustive_structs,
     clippy::expect_used,
     clippy::implicit_return,
-    clippy::integer_arithmetic,
-    clippy::integer_division,
     clippy::match_same_arms,
     clippy::match_wildcard_for_single_variants,
     clippy::missing_trait_methods,
@@ -50,12 +48,10 @@
     )
 )]
 
-use rocket::{Build, Rocket};
-
-#[macro_use]
 extern crate rocket;
 
-#[launch]
-fn rocket() -> Rocket<Build> {
-    rocket::build()
+#[rocket::main]
+async fn main() -> Result<(), rocket::Error> {
+    rocket::build().launch().await?;
+    Ok(())
 }

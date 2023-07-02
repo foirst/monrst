@@ -23,6 +23,14 @@ jobs:
           key: ${{ runner.os }}
       - name: Initialization
         run: cargo install cargo-deny
+      - name: Save cargo cache
+        id: cargo-cache-save
+        uses: actions/cache/save@v3
+        with:
+          path: |
+            "~/.cargo/git"
+            "~/.cargo/registry"
+          key: ${{ steps.cargo-cache-restore.outputs.cache-primary-key }}
       - name: Target cache restore
         id: target-cache-restore
         uses: actions/cache/restore@v3
@@ -38,19 +46,11 @@ jobs:
         run: cargo clippy --all-targets --all-features --no-deps
       - name: Build
         run: cargo build
-      - name: Tests
-        run: cargo test
-      - name: Save cargo cache
-        id: cargo-cache-save
-        uses: actions/cache/save@v3
-        with:
-          path: |
-            "~/.cargo/git"
-            "~/.cargo/registry"
-          key: ${{ steps.cargo-cache-restore.outputs.cache-primary-key }}
       - name: Save target cache
         id: target-cache-save
         uses: actions/cache/save@v3
         with:
           path: "target/"
           key: ${{ steps.cargo-cache-restore.outputs.cache-primary-key }}
+      - name: Tests
+        run: cargo test
