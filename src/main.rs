@@ -50,7 +50,12 @@
     )
 )]
 
-#[allow(clippy::print_stdout)]
-fn main() {
-    println!("Hello, world!");
+use rocket::{Build, Rocket};
+
+#[macro_use]
+extern crate rocket;
+
+#[launch]
+fn rocket() -> Rocket<Build> {
+    rocket::build()
 }
