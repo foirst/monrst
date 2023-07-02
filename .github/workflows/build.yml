@@ -13,14 +13,17 @@ jobs:
 
     steps:
       - uses: actions/checkout@v2
-      - name: Initialization
-        run: cargo install cargo-deny
       - name: Cache restore
         id: cache-restore
         uses: actions/cache/restore@v3
         with:
-          path: "target/"
-          key: ${{ runner.os }}-cache
+          path: |
+            "target/"
+            "~/.cargo/git"
+            "~/.cargo/registry"
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+      - name: Initialization
+        run: cargo install cargo-deny
       - name: Check
         run: |
           cargo deny check
