@@ -1,12 +1,23 @@
-[package]
-name = "monrst"
+[workspace]
+members = [
+    "crates/api",
+    "crates/apub"
+]
+
+[workspace.package]
 version = "0.1.0"
 edition = "2021"
-
-authors = [
-    "Balthazar Patiachvili"
-]
+description = "A chat platform for the fediverse"
 license = "GPL-3.0-or-later"
+repository = "https://github.com/foirst/monrst"
+
+[package]
+name = "monrst"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+dependencies.workspace = true
 
 [dependencies]
 rocket = "=0.5.0-rc.3"

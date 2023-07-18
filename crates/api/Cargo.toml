@@ -1,0 +1,9 @@
+[package]
+name = "monrst_api"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[dependencies]
+uuid = { version = "1", features = ["serde", "v4"] }
