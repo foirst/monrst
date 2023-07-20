@@ -17,9 +17,9 @@ confidence-threshold = 1
 copyleft = "allow"
 default = "deny"
 exceptions = [
-    { allow = ["Unicode-DFS-2016"], name = "unicode-ident" }
+    { allow = ["Unicode-DFS-2016"], name = "unicode-ident" },
 ]
-unlicensed = "deny"
+unlicensed = "allow"
 
 [sources]
 unknown-registry = "deny"

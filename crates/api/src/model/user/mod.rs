@@ -20,7 +20,7 @@ pub struct User {
     /// This is used to differentiate several users with a same username
     ///
     /// It is represented with an hexadecimal format
-    pub discriminator: [u8; 4],
+    pub discriminator: [u8; 3],
 
     /// Is this user currently online ?
     pub online: bool,

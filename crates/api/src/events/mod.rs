@@ -1,3 +1,3 @@
-//! Events handled by the server
+//! Events managed by monrst
 
 pub mod client;

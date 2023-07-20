@@ -15,6 +15,9 @@ enum Kind {
 
     /// Mobile client
     Mobile,
+
+    /// Web client
+    Web,
 }
 
 /// Main structure for clients

@@ -1,4 +1,5 @@
 //! Model of foirst
 
-pub mod channels;
+pub mod channel;
+pub mod server;
 pub mod user;
