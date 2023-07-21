@@ -48,39 +48,28 @@
     )
 )]
 
-use std::collections::HashMap;
+mod client;
+
 use std::env;
-use std::sync::{Arc, Mutex};
 
 use anyhow::Result;
-use futures_util::SinkExt;
-use monrst_api::model::user::client::Client;
-use tokio::net::TcpListener;
-use tokio_websockets::ServerBuilder;
-use uuid::Uuid;
+use async_std::net::TcpListener;
+use log::{info, LevelFilter};
+use systemd_journal_logger::JournalLog;
 
-#[tokio::main]
+#[async_std::main]
 async fn main() -> Result<()> {
-    /* let clients = Arc::new(Mutex::new(HashMap::<Uuid, Client>::new())); */
+    JournalLog::default().with_syslog_identifier("monrst".to_owned()).install()?;
+    log::set_max_level(LevelFilter::Info);
+
+    info!("Starting monrst");
 
     let bind = env::var("HOST").unwrap_or_else(|_| "0.0.0.0:13009".to_owned());
     let listener = TcpListener::bind(bind).await?;
 
     while let Ok((stream, addr)) = listener.accept().await {
-        println!("{:?} {}", stream, addr);
-        tokio::spawn(async move {
-            let mut ws_stream = match ServerBuilder::new().accept(stream).await {
-                Ok(ws) => ws,
-                Err(err) => {
-                    eprintln!("{:?}", err);
-                    return;
-                },
-            };
-            while let Some(Ok(msg)) = ws_stream.next().await {
-                println!("{:?}", msg);
-                ws_stream.send(msg).await.expect("Failed to send the message");
-            }
-        });
+        info!("New connection from {}", addr);
+        client::spawn(stream, addr);
     }
 
     Ok(())
