@@ -24,9 +24,11 @@ monrst_api = { version = "=0.1.0", path = "./crates/api" }
 anyhow = "1"
 async-std = { version = "1", features = ["attributes"]}
 async-tungstenite = "0.22"
+derive_more = "0.99"
 futures = "0.3"
 futures-util = "0.3"
 log = "0.4"
+querystring = "1"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 systemd-journal-logger = "1"
@@ -38,9 +40,11 @@ monrst_api = { workspace = true }
 anyhow = { workspace = true }
 async-std = { workspace = true }
 async-tungstenite = { workspace = true }
+derive_more = { workspace = true }
 futures = { workspace = true }
 futures-util = { workspace = true }
 log = { workspace = true }
+querystring = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 systemd-journal-logger = { workspace = true }

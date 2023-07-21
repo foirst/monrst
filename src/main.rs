@@ -49,6 +49,7 @@
 )]
 
 mod client;
+mod protocol;
 
 use std::env;
 
