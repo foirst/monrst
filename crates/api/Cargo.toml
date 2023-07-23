@@ -4,6 +4,9 @@ version.workspace = true
 edition.workspace = true
 license.workspace = true
 repository.workspace = true
+dependencies.workspace = true
 
 [dependencies]
-uuid = { version = "1", features = ["serde", "v4"] }
+anyhow = { workspace = true }
+spin = { workspace = true }
+uuid = { workspace = true }

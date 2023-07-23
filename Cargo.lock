@@ -646,6 +646,8 @@ dependencies = [
 name = "monrst_api"
 version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "spin",
  "uuid",
 ]
 

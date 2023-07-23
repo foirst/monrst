@@ -49,13 +49,14 @@
 )]
 
 mod client;
-mod protocol;
 
 use std::env;
 
 use anyhow::Result;
 use async_std::net::TcpListener;
+use async_std::task;
 use log::{info, LevelFilter};
+use monrst_api::protocol::VERSION;
 use systemd_journal_logger::JournalLog;
 
 #[async_std::main]
@@ -63,15 +64,19 @@ async fn main() -> Result<()> {
     JournalLog::default().with_syslog_identifier("monrst".to_owned()).install()?;
     log::set_max_level(LevelFilter::Info);
 
-    info!("Starting monrst");
+    info!("Starting monrst version {}", *VERSION);
 
     let bind = env::var("HOST").unwrap_or_else(|_| "0.0.0.0:13009".to_owned());
-    let listener = TcpListener::bind(bind).await?;
+    let listener = TcpListener::bind(&bind).await?;
+    info!("Listening on {}", bind);
 
-    while let Ok((stream, addr)) = listener.accept().await {
-        info!("New connection from {}", addr);
-        client::spawn(stream, addr);
-    }
+    task::spawn(async move {
+        while let Ok((stream, addr)) = listener.accept().await {
+            info!("New connection from {}", addr);
+            client::spawn(stream, addr);
+        }
+    })
+    .await;
 
     Ok(())
 }
