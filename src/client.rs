@@ -32,6 +32,11 @@ impl Callback for WebsocketHandshakeCallback {
         request: &handshake::server::Request,
         response: handshake::server::Response,
     ) -> Result<handshake::server::Response, handshake::server::ErrorResponse> {
+        /// Returns the first element `y` such that `(x, y)` is in `list`
+        fn vec_association<'a, S: PartialEq, T>(list: &'a Vec<(S, T)>, x: &'a S) -> Option<&'a T> {
+            Some(&list.iter().find(|(z, _y)| x == z)?.1)
+        }
+
         let query = request.uri().query().unwrap_or_default();
         let params = querify(query);
 
