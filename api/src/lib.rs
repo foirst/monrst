@@ -48,6 +48,7 @@
     )
 )]
 
+pub mod database;
 pub mod events;
 pub mod model;
 pub mod protocol;

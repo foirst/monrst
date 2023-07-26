@@ -8,5 +8,6 @@ dependencies.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
+async-trait = { workspace = true }
 spin = { workspace = true }
 uuid = { workspace = true }

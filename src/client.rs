@@ -1,25 +1,19 @@
 //! Client handling
 
 use core::str::FromStr;
-use std::collections::HashMap;
 use std::net::SocketAddr;
-use std::sync::Arc;
 
 use async_std::net::TcpStream;
 use async_std::stream::StreamExt;
-use async_std::sync::RwLock;
 use async_std::task;
 use async_tungstenite::tungstenite::handshake;
 use async_tungstenite::tungstenite::handshake::server::Callback;
 use derive_more::Deref;
 use futures::channel::oneshot::{self, Sender};
 use futures_util::SinkExt;
-use log::{error, info};
-use monrst_api::model::user::client::Client;
+use log::{error, warn};
 use monrst_api::protocol::{self, Version};
 use querystring::querify;
-use spin::Lazy;
-use uuid::Uuid;
 
 /// Structure used to hold one side of a channel to receive the parsed information
 #[derive(Debug, Deref)]
@@ -74,7 +68,7 @@ pub fn spawn(stream: TcpStream, addr: SocketAddr) {
 
         while let Some(Ok(msg)) = ws_stream.next().await {
             if let Err(err) = ws_stream.send(msg).await {
-                info!("Peer {} : {}", addr, err);
+                warn!("Peer {} : {}", addr, err);
             }
         }
     });

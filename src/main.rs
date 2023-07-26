@@ -47,6 +47,7 @@
         clippy::wildcard_imports
     )
 )]
+#![feature(async_fn_in_trait)]
 
 mod client;
 

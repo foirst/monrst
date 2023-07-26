@@ -1,6 +1,6 @@
 [workspace]
 members = [
-    "crates/api",
+    "api",
 ]
 
 [workspace.package]
@@ -19,10 +19,11 @@ repository.workspace = true
 dependencies.workspace = true
 
 [workspace.dependencies]
-monrst_api = { version = "=0.1.0", path = "./crates/api" }
+monrst_api = { version = "=0.1.0", path = "./api" }
 
 anyhow = "1"
 async-std = { version = "1", features = ["attributes"]}
+async-trait = "0.1"
 async-tungstenite = "0.22"
 derive_more = "0.99"
 futures = "0.3"
