@@ -8,7 +8,7 @@ use async_std::stream::StreamExt;
 use async_std::task;
 use async_tungstenite::tungstenite::handshake;
 use async_tungstenite::tungstenite::handshake::server::Callback;
-use derive_more::Deref;
+use derive_more::{Deref, DerefMut};
 use futures::channel::oneshot::{self, Sender};
 use futures_util::SinkExt;
 use log::{error, warn};
@@ -16,7 +16,7 @@ use monrst_api::protocol::{self, Version};
 use querystring::querify;
 
 /// Structure used to hold one side of a channel to receive the parsed information
-#[derive(Debug, Deref)]
+#[derive(Debug, Deref, DerefMut)]
 pub struct WebsocketHandshakeCallback(Sender<protocol::Configuration>);
 
 impl WebsocketHandshakeCallback {
