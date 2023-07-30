@@ -6,7 +6,7 @@ use uuid::Uuid;
 ///
 /// It can be desktop, mobile, ...
 #[derive(Debug)]
-enum Kind {
+pub enum Kind {
     /// Terminal client
     Tui,
 
@@ -26,11 +26,11 @@ enum Kind {
 #[derive(Debug)]
 pub struct Client {
     /// Unique identifier
-    uuid: Uuid,
+    pub uuid: Uuid,
 
     /// List of users attached to this client represented by their UUIDs
-    attached_users: Vec<Uuid>,
+    pub attached_users: Vec<Uuid>,
 
     /// Kind of client
-    kind: Kind,
+    pub kind: Kind,
 }

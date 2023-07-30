@@ -37,7 +37,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y xsltproc lcov
       - name: Tests
-        run: cargo test
+        run: cargo test --workspace
       - name: Generate coverage
         run: |
           grcov . -s . -b ./target/debug/ --branch --llvm --ignore-not-existing --excl-line "${EXCL_LINE}" --excl-start "${EXCL_START}" --excl-stop "${EXCL_STOP}" --excl-br-line "${EXCL_BR_LINE}" --excl-br-start "${EXCL_BR_START}" --excl-br-stop "${EXCL_BR_STOP}" --ignore "*cargo*" -t cobertura -o ./coverage_raw.xml && xsltproc --novalid --output ./coverage.xml ./.coverage.xsl ./coverage_raw.xml || true

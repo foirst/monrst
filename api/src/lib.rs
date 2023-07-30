@@ -47,6 +47,7 @@
         clippy::wildcard_imports
     )
 )]
+#![feature(slice_as_chunks)]
 
 pub mod database;
 pub mod events;
