@@ -46,10 +46,18 @@ impl Callback for WebsocketHandshakeCallback {
         let Ok(version) = Version::from_str(stringed_version) else { return Err(handshake::server::ErrorResponse::new(Some(format!("Bad version format : \"{stringed_version}\"")))) };
         let Ok(format) = protocol::Format::from_str(stringed_format) else { return Err(handshake::server::ErrorResponse::new(Some(format!("Bad format format : \"{stringed_format}\"")))) };
 
-        if self.0.send(protocol::Configuration { format }).is_ok() && Version::are_compatible(&version, &protocol::VERSION) {
-            Ok(response)
-        } else {
-            Err(handshake::server::ErrorResponse::new(None))
+        match self.0.send(protocol::Configuration { format }) {
+            Ok(()) => {
+                if Version::are_compatible(&version, &protocol::VERSION) {
+                    Ok(response)
+                } else {
+                    Err(handshake::server::ErrorResponse::new(Some(format!(
+                        "Given protocol version {version} and server protocol version {:?} are not compatible",
+                        &protocol::VERSION
+                    ))))
+                }
+            },
+            Err(err) => Err(handshake::server::ErrorResponse::new(Some(format!("{err:?}")))),
         }
     }
 }
@@ -61,14 +69,14 @@ pub fn spawn(stream: TcpStream, addr: SocketAddr) {
         let mut ws_stream = match async_tungstenite::accept_hdr_async(stream, WebsocketHandshakeCallback::new(sender)).await {
             Ok(ws) => ws,
             Err(err) => {
-                error!("Failed to upgrade a TCP stream to websocket: {:?}", err);
+                error!("Failed to upgrade a TCP stream to websocket: {err:?}");
                 return;
             },
         };
 
         while let Some(Ok(msg)) = ws_stream.next().await {
             if let Err(err) = ws_stream.send(msg).await {
-                warn!("Peer {} : {}", addr, err);
+                warn!("Peer {addr} : {err}");
             }
         }
     });
