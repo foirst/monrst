@@ -24,16 +24,17 @@ anyhow = "1"
 async-std = { version = "1", features = ["attributes"]}
 async-trait = "0.1"
 async-tungstenite = "0.22"
+chrono = "0.4"
 derive_more = "0.99"
 futures = "0.3"
 futures-util = "0.3"
 log = "0.4"
+log4rs = "1"
 querystring = "1"
 rand = "0.8"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 spin = { version = "0.9", features = ["lazy"] }
-systemd-journal-logger = "1"
 uuid = { version = "1", features = ["serde", "v4"] }
 
 [dependencies]
@@ -42,13 +43,14 @@ monrst_api = { workspace = true }
 anyhow = { workspace = true }
 async-std = { workspace = true }
 async-tungstenite = { workspace = true }
+chrono = { workspace = true }
 derive_more = { workspace = true }
 futures = { workspace = true }
 futures-util = { workspace = true }
 log = { workspace = true }
+log4rs = { workspace = true }
 querystring = { workspace = true }
 serde = { workspace = true }
 serde_json = { workspace = true }
 spin = { workspace = true }
-systemd-journal-logger = { workspace = true }
 uuid = { workspace = true }

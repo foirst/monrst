@@ -50,19 +50,21 @@
 #![feature(async_fn_in_trait)]
 
 mod client;
+mod logging;
 
 use std::env;
+use std::path::Path;
 
 use anyhow::Result;
 use async_std::net::TcpListener;
 use async_std::task;
+use chrono::Utc;
 use log::{info, LevelFilter};
 use monrst_api::protocol::VERSION;
-use systemd_journal_logger::JournalLog;
 
 #[async_std::main]
 async fn main() -> Result<()> {
-    JournalLog::default().with_syslog_identifier("monrst".to_owned()).install()?;
+    logging::init(Path::new(&format!("logs/{}", Utc::now().format("%Y-%m-%d_%H-%M-%S.log"))).into())?;
     log::set_max_level(LevelFilter::Info);
 
     info!("Starting monrst version {}", *VERSION);

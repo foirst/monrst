@@ -8,7 +8,7 @@ use anyhow::{anyhow, Result};
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use super::DatabaseInterface;
+use crate::database;
 use crate::model::channel::message::Message;
 use crate::model::channel::Channel;
 use crate::model::user::User;
@@ -27,7 +27,7 @@ pub struct Database {
 }
 
 #[async_trait]
-impl DatabaseInterface for Database {
+impl database::Interface for Database {
     #[inline]
     async fn channel_fetch(&self, uuid: Uuid) -> Result<Channel> {
         self.channels
@@ -143,7 +143,7 @@ mod test {
     use spin::Lazy;
 
     use super::Database;
-    use crate::database::DatabaseInterface;
+    use crate::database::Interface;
     use crate::model::channel::message::Message;
     use crate::model::channel::Channel;
     use crate::model::user::User;

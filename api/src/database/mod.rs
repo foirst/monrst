@@ -11,9 +11,8 @@ use crate::model::channel::Channel;
 use crate::model::user::User;
 
 /// Representation of a database
-#[allow(clippy::module_name_repetitions)]
 #[async_trait]
-pub trait DatabaseInterface: Sync + Send {
+pub trait Interface: Sync + Send {
     /// Fetches a channel by its UUID
     async fn channel_fetch(&self, uuid: Uuid) -> Result<Channel>;
 
