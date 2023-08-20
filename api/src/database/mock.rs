@@ -139,7 +139,8 @@ impl database::Interface for Database {
 
 #[cfg(test)]
 mod test {
-    use async_std::sync::Mutex;
+    use std::sync::Mutex;
+
     use spin::Lazy;
 
     use super::Database;
@@ -151,9 +152,9 @@ mod test {
     /// Integrated database used for the tests
     static DATABASE: Lazy<Mutex<Database>> = Lazy::new(|| Mutex::new(Database::default()));
 
-    #[async_std::test]
+    #[tokio::test]
     async fn channels_and_messages() {
-        let mut database = DATABASE.lock().await;
+        let mut database = DATABASE.lock().unwrap();
 
         let alice = User::new("Alice");
         let bob = User::new("Bob");
@@ -174,9 +175,9 @@ mod test {
         assert!(database.message_fetch(message_alice_uuid).await.is_err());
     }
 
-    #[async_std::test]
+    #[tokio::test]
     async fn users() {
-        let mut database = DATABASE.lock().await;
+        let mut database = DATABASE.lock().unwrap();
 
         let alice = User::new("Alice");
         let bob = User::new("Bob");

@@ -29,6 +29,7 @@
     clippy::separated_literal_suffix,
     clippy::shadow_reuse,
     clippy::shadow_unrelated,
+    clippy::std_instead_of_core,
     clippy::unreachable,
     clippy::unwrap_in_result,
     clippy::wildcard_in_or_patterns,
@@ -49,23 +50,45 @@
 )]
 #![feature(async_fn_in_trait)]
 
+extern crate alloc;
+
 mod client;
 mod logging;
 
+use alloc::sync::Arc;
 use std::env;
-use std::path::Path;
+use std::fs::File;
+use std::io::BufReader;
+use std::path::{Path, PathBuf};
 
 use anyhow::Result;
-use async_std::net::TcpListener;
-use async_std::task;
+use argh::FromArgs;
 use chrono::Utc;
-use log::{info, LevelFilter};
+use log::{error, info, LevelFilter};
 use monrst_api::protocol::VERSION;
+use rustls::{Certificate, PrivateKey};
+use rustls_pemfile::{certs, pkcs8_private_keys};
+use tokio::io;
+use tokio::net::TcpListener;
+use tokio_rustls::TlsAcceptor;
 
-#[async_std::main]
+/// `foirst` server
+#[derive(FromArgs)]
+struct Options {
+    /// cert file
+    #[argh(option, short = 'c')]
+    cert: PathBuf,
+
+    /// key file
+    #[argh(option, short = 'k')]
+    key: PathBuf,
+}
+
+#[tokio::main]
 async fn main() -> Result<()> {
     logging::init(Path::new(&format!("logs/{}", Utc::now().format("%Y-%m-%d_%H-%M-%S.log"))).into())?;
     log::set_max_level(LevelFilter::Info);
+    let options: Options = argh::from_env();
 
     info!("Starting monrst version {}", *VERSION);
 
@@ -73,13 +96,27 @@ async fn main() -> Result<()> {
     let listener = TcpListener::bind(&bind).await?;
     info!("Listening on {}", bind);
 
-    task::spawn(async move {
-        while let Ok((stream, addr)) = listener.accept().await {
-            info!("New connection from {}", addr);
-            client::spawn(stream, addr);
-        }
-    })
-    .await;
+    let certs = certs(&mut BufReader::new(File::open(&options.cert)?))
+        .map_err(|_err| io::Error::new(io::ErrorKind::InvalidData, "invalid cert file"))
+        .map(|keys| keys.into_iter().map(Certificate).collect::<Vec<Certificate>>())?;
+    let mut keys = pkcs8_private_keys(&mut BufReader::new(File::open(&options.key)?))
+        .map_err(|_err| io::Error::new(io::ErrorKind::InvalidData, "invalid key file"))
+        .map(|keys| keys.into_iter().map(PrivateKey).collect::<Vec<PrivateKey>>())?;
 
-    Ok(())
+    let config = rustls::ServerConfig::builder()
+        .with_safe_defaults()
+        .with_no_client_auth()
+        .with_single_cert(certs, keys.remove(0))?;
+    let acceptor = TlsAcceptor::from(Arc::new(config));
+
+    loop {
+        let (stream, addr) = listener.accept().await?;
+        let tls_stream = acceptor.clone().accept(stream).await?;
+
+        tokio::spawn(async move {
+            if let Err(err) = client::spawn(tls_stream, addr).await {
+                error!("Error from client {}: {:?}", addr, err);
+            }
+        });
+    }
 }

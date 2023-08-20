@@ -12,6 +12,7 @@
 #![allow(
     clippy::arithmetic_side_effects,
     clippy::as_conversions,
+    clippy::await_holding_lock,
     clippy::blanket_clippy_restriction_lints,
     clippy::else_if_without_else,
     clippy::exhaustive_enums,
@@ -29,6 +30,7 @@
     clippy::separated_literal_suffix,
     clippy::shadow_reuse,
     clippy::shadow_unrelated,
+    clippy::std_instead_of_core,
     clippy::unreachable,
     clippy::unwrap_in_result,
     clippy::wildcard_in_or_patterns,

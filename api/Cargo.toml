@@ -7,9 +7,9 @@ repository.workspace = true
 
 [dependencies]
 anyhow = { workspace = true }
-async-std = { workspace = true }
 async-trait = { workspace = true }
 derive_more = { workspace = true }
 rand = { workspace = true }
 spin = { workspace = true }
+tokio = { workspace = true }
 uuid = { workspace = true }

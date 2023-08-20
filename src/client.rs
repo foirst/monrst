@@ -1,83 +1,41 @@
 //! Client handling
 
-use core::str::FromStr;
 use std::net::SocketAddr;
 
-use async_std::net::TcpStream;
-use async_std::stream::StreamExt;
-use async_std::task;
-use async_tungstenite::tungstenite::handshake;
-use async_tungstenite::tungstenite::handshake::server::Callback;
-use derive_more::{Deref, DerefMut};
-use futures::channel::oneshot::{self, Sender};
-use futures_util::SinkExt;
-use log::{error, warn};
-use monrst_api::protocol::{self, Version};
-use querystring::querify;
+use anyhow::Result;
+use log::info;
+use tokio::io::{split, AsyncBufReadExt, BufReader, BufWriter, ReadHalf, WriteHalf};
+use tokio::net::TcpStream;
+use tokio_rustls::server::TlsStream;
 
-/// Structure used to hold one side of a channel to receive the parsed information
-#[derive(Debug, Deref, DerefMut)]
-pub struct WebsocketHandshakeCallback(Sender<protocol::Configuration>);
+/// Client implementation for the communication protocol
+#[derive(Debug)]
+struct Client {
+    /// Reading part of the TLS over TCP stream to the client
+    reading_buffer: BufReader<ReadHalf<TlsStream<TcpStream>>>,
 
-impl WebsocketHandshakeCallback {
-    /// Creates a new instance from a given sender
-    pub fn new(sender: Sender<protocol::Configuration>) -> Self {
-        Self(sender)
-    }
-}
-
-impl Callback for WebsocketHandshakeCallback {
-    fn on_request(
-        self,
-        request: &handshake::server::Request,
-        response: handshake::server::Response,
-    ) -> Result<handshake::server::Response, handshake::server::ErrorResponse> {
-        /// Returns the first element `y` such that `(x, y)` is in `list`
-        fn vec_association<'element, S: PartialEq, T>(list: &'element [(S, T)], x: &'element S) -> Option<&'element T> {
-            Some(&list.iter().find(|(z, _y)| x == z)?.1)
-        }
-
-        let query = request.uri().query().unwrap_or_default();
-        let params = querify(query);
-
-        let Some(&stringed_version) = vec_association(&params, &"version") else { return Err(handshake::server::ErrorResponse::new(Some("Version required in handshake callback but not found".to_owned()))) };
-        let Some(&stringed_format) = vec_association(&params, &"format") else { return Err(handshake::server::ErrorResponse::new(Some("Format required in handshake callback but not found".to_owned()))) };
-
-        let Ok(version) = Version::from_str(stringed_version) else { return Err(handshake::server::ErrorResponse::new(Some(format!("Bad version format : \"{stringed_version}\"")))) };
-        let Ok(format) = protocol::Format::from_str(stringed_format) else { return Err(handshake::server::ErrorResponse::new(Some(format!("Bad format format : \"{stringed_format}\"")))) };
-
-        match self.0.send(protocol::Configuration { format }) {
-            Ok(()) => {
-                if Version::are_compatible(&version, &protocol::VERSION) {
-                    Ok(response)
-                } else {
-                    Err(handshake::server::ErrorResponse::new(Some(format!(
-                        "Given protocol version {version} and server protocol version {:?} are not compatible",
-                        &protocol::VERSION
-                    ))))
-                }
-            },
-            Err(err) => Err(handshake::server::ErrorResponse::new(Some(format!("{err:?}")))),
-        }
-    }
+    /// Reading part of the TLS over TCP stream to the client
+    _writing_buffer: BufWriter<WriteHalf<TlsStream<TcpStream>>>,
 }
 
 /// Spawn a new websocket stream with a client
-pub fn spawn(stream: TcpStream, addr: SocketAddr) {
-    task::spawn(async move {
-        let (sender, _receiver) = oneshot::channel::<protocol::Configuration>();
-        let mut ws_stream = match async_tungstenite::accept_hdr_async(stream, WebsocketHandshakeCallback::new(sender)).await {
-            Ok(ws) => ws,
-            Err(err) => {
-                error!("Failed to upgrade a TCP stream to websocket: {err:?}");
-                return;
-            },
-        };
+#[allow(clippy::unnecessary_wraps)]
+pub async fn spawn(tls_stream: TlsStream<TcpStream>, addr: SocketAddr) -> Result<()> {
+    let (reader, writer) = split(tls_stream);
 
-        while let Some(Ok(msg)) = ws_stream.next().await {
-            if let Err(err) = ws_stream.send(msg).await {
-                warn!("Peer {addr} : {err}");
-            }
+    let mut client = Client {
+        reading_buffer: BufReader::new(reader),
+        _writing_buffer: BufWriter::new(writer),
+    };
+
+    let mut buffer = String::new();
+    while let Ok(n) = client.reading_buffer.read_line(&mut buffer).await {
+        if n == 0 {
+            break;
         }
-    });
+        info!("Echo from client {} - {}", addr, buffer);
+        buffer.clear();
+    }
+
+    Ok(())
 }
